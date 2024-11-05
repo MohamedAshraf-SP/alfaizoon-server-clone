@@ -20,11 +20,18 @@ export const searchAqidah = async (req, res) => {
       // hID should be a positive number
       queryConditions.push({ aID: aID });
     } else if (searchWord) {
-      queryConditions.push({ arabic: { $regex: new RegExp(searchWord, "i") } });
+      queryConditions.push({ arabicQ: { $regex: new RegExp(searchWord, "i") } });
       queryConditions.push({
-        arabicWithoutTashkit: { $regex: searchWord, $options: "i" },
+        arabicQWithoutTashkit: { $regex: searchWord, $options: "i" },
       });
-      queryConditions.push({ english: { $regex: searchWord, $options: "i" } });
+      queryConditions.push({ englishQ: { $regex: searchWord, $options: "i" } });
+
+
+      queryConditions.push({ arabicA: { $regex: new RegExp(searchWord, "i") } });
+      queryConditions.push({
+        arabicAWithoutTashkit: { $regex: searchWord, $options: "i" },
+      });
+      queryConditions.push({ englishA: { $regex: searchWord, $options: "i" } });
     } else {
       queryConditions.push({ nothing: 0 });
     }
@@ -33,7 +40,7 @@ export const searchAqidah = async (req, res) => {
 
     const aqidahs = await Aqidah.find(
       { $or: [...queryConditions] }, // الشرط
-      { aID: 1, arabic: 1, english: 1 } // التوقعات
+      { aID: 1, arabicQ: 1, englishQ: 1 } // التوقعات
     ).limit(10);
 
     if (!aqidahs) {
@@ -56,8 +63,10 @@ export const getAqidahById = async (req, res) => {
     res.status(200).json({
       _id: aqidah._id,
       aID: aqidah.aID,
-      arabic: aqidah.arabic,
-      english: aqidah.english,
+      arabicQ: aqidah.arabicQ,
+      englishQ: aqidah.englishQ,
+      arabicA: aqidah.arabicA,
+      englishA: aqidah.englishA,
       voice: aqidah.voice,
     });
   } catch (error) {
@@ -110,14 +119,18 @@ export const addAqidah = async (req, res) => {
       size: req.file.size,
     });
 
-    const arabicWithoutTashkit = removeDiacritics(req.body.arabic);
+    const arabicQWithoutTashkit = removeDiacritics(req.body.arabicQ);
+    const arabicAWithoutTashkit = removeDiacritics(req.body.arabicA);
     await newAqidahVoice.save();
     // let cryptedPassword = req.body.password
     const newAqidah = new Aqidah({
       aID: req.body.number,
-      arabic: req.body.arabic,
-      arabicWithoutTashkit: arabicWithoutTashkit,
-      english: req.body.english,
+      arabicQ: req.body.arabicQ,
+      arabicQWithoutTashkit: arabicQWithoutTashkit,
+      englishQ: req.body.englishQ,
+      arabicA: req.body.arabicA,
+      arabicAWithoutTashkit: arabicAWithoutTashkit,
+      englishA: req.body.englishA,
       voice: newAqidahVoice,
     });
 
@@ -167,21 +180,24 @@ export const updateAqidah = async (req, res) => {
     }
     //console.log(voiceData)
 
-    const arabicWithoutTashkit = removeDiacritics(req.body.arabic || "");
+    const arabicQWithoutTashkit = removeDiacritics(req.body.arabicQ || "");
+    const arabicAWithoutTashkit = removeDiacritics(req.body.arabicA || "");
 
     const updatedAqidah = await Aqidah.findByIdAndUpdate(
       req.params.id,
       {
         aID: req.body.number || aqidahToUpdate.number,
-        arabic: req.body.arabic || aqidahToUpdate.arabic,
-        arabicWithoutTashkit:
-          arabicWithoutTashkit || aqidahToUpdate.arabicWithoutTashkit,
-        english: req.body.english || aqidahToUpdate.english,
+        arabicQ: req.body.arabicQ || aqidahToUpdate.arabicQ,
+        arabicQWithoutTashkit: arabicQWithoutTashkit || aqidahToUpdate.arabicQWithoutTashkit,
+        englishQ: req.body.englishQ || aqidahToUpdate.englishQ,
+        arabicA: req.body.arabicA || aqidahToUpdate.arabicA,
+        arabicAWithoutTashkit: arabicAWithoutTashkit || aqidahToUpdate.arabicAWithoutTashkit,
+        englishA: req.body.englishA || aqidahToUpdate.englishA,
         voice: newAqidahVoice || oldVoice,
       },
       {
         new: true,
-        projection: { aID: 1, arabic: 1, english: 1 },
+        projection: { aID: 1, arabicQ: 1, englishQ: 1 },
       }
     );
 
@@ -203,6 +219,7 @@ export const deleteAqidah = async (req, res) => {
       path: "voice",
     });
 
+    //await Aqidah.deleteMany()
     if (!result) {
       return res.status(404).json({ message: "Aqidah not found" });
     }
@@ -218,6 +235,7 @@ export const deleteAqidah = async (req, res) => {
       .status(200)
       .json({ message: "Aqidah and associated voice deleted successfully" });
   } catch (error) {
+
     res.status(500).json({ error: error.message });
   }
 };

@@ -140,6 +140,7 @@ function UserPage() {
     setdisplaystudent(student);
     setstudenName("");
   };
+  
   // whats app func
   const WhatsappFunc = (e) => {
     e.preventDefault();

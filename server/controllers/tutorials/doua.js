@@ -121,11 +121,11 @@ export const getDouasByType = async (req, res) => {
   // console.log(douaCount)
 
   const pagesCount = Math.ceil(douaCount / limit) || 0;
-   console.log(req.params.type);
+  console.log(req.params.type);
   try {
     const douas = await Doua.find(
       { type: req.params.type },
-       { dID: 1, name: 1, arabic: 1, english: 1, voice: 1, type: 1 },
+      { dID: 1, name: 1, arabic: 1, english: 1, voice: 1, type: 1 },
     )
 
       .skip(skip)
@@ -333,6 +333,9 @@ export const deleteDoua = async (req, res) => {
     const result = await Doua.findByIdAndDelete(req.params.id).populate({
       path: "voice",
     });
+
+
+    
 
     if (!result) {
       return res.status(404).json({ message: "Doua not found" });
